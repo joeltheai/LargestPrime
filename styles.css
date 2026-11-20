@@ -34,15 +34,25 @@ html:has(#position-slider:not([hidden])) main { padding-inline-end: 2rem; }
   line-height: 1.25;
 }
 
+.intro-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 .55rem;
+}
+
+.intro-details { font-size: .875rem; }
+
 h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: clamp(1rem, 3vw, 1.25rem);
   font-weight: 600;
 }
 
 .formula {
   margin: 0;
   font: 1rem/1.25 var(--mono);
+  white-space: nowrap;
 }
 
 .formula sup {
@@ -53,6 +63,8 @@ h1 {
 .credit { margin: 0; color: var(--muted); }
 
 a { color: var(--accent); text-underline-offset: .2em; }
+
+.intro-details a { white-space: nowrap; }
 
 .reader-header {
   position: sticky;
