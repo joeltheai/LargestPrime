@@ -5,6 +5,7 @@ const rows = document.querySelector('#rows');
 const measure = document.querySelector('#digit-measure');
 const toolbar = document.querySelector('.toolbar');
 const position = document.querySelector('#position');
+const positionSlider = document.querySelector('#position-slider');
 const loadStatus = document.querySelector('#load-status');
 const form = document.querySelector('#jump-form');
 const input = document.querySelector('#digit');
@@ -29,16 +30,20 @@ let currentDigit = 0;
 let selectedDigit = -1;
 let insideList = false;
 let previousPosition = '';
+let scrubbing = false;
 
 function scheduleRender() {
   if (frame === undefined) frame = requestAnimationFrame(render);
 }
 
+function scrollToOffset(offset) {
+  const listTop = list.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo(0, Math.floor(listTop - toolbar.offsetHeight + offset * layout.scrollScale));
+}
+
 function scrollToDigit(digit) {
   const row = Math.floor(digit / layout.digitsPerRow);
-  const listTop = list.getBoundingClientRect().top + window.scrollY;
-  const offset = Math.min(layout.maxLogicalOffset, row * layout.rowHeight);
-  window.scrollTo(0, Math.floor(listTop - toolbar.offsetHeight + offset * layout.scrollScale));
+  scrollToOffset(Math.min(layout.maxLogicalOffset, row * layout.rowHeight));
 }
 
 function measureLayout() {
@@ -172,14 +177,18 @@ function render() {
 
   const firstBlock = Math.floor(first * digitsPerRow / digitsPerBlock);
   const lastBlock = Math.floor((Math.min(digitCount, end * digitsPerRow) - 1) / digitsPerBlock);
-  requestBlocks(firstBlock, lastBlock);
+  if (!scrubbing) requestBlocks(firstBlock, lastBlock);
   paintRows(first, end);
   rows.style.transform = `translateY(${first * rowHeight + Math.max(0, physicalOffset) - logicalOffset}px)`;
 
   const range = `Digits ${format.format(currentDigit + 1)} – ${format.format(Math.min(digitCount, endVisible * digitsPerRow))}`;
   if (range !== previousPosition) {
     position.textContent = range;
+    positionSlider.setAttribute('aria-valuetext', range);
     previousPosition = range;
+  }
+  if (!scrubbing) {
+    positionSlider.valueAsNumber = Math.round(logicalOffset / maxLogicalOffset * Number(positionSlider.max));
   }
   const firstVisibleBlock = Math.floor(currentDigit / digitsPerBlock);
   const lastVisibleBlock = Math.floor((Math.min(digitCount, endVisible * digitsPerRow) - 1) / digitsPerBlock);
@@ -216,10 +225,43 @@ retry.addEventListener('click', () => {
   scheduleRender();
 });
 
+positionSlider.addEventListener('pointerdown', (event) => {
+  if (event.isPrimary && event.button === 0) scrubbing = true;
+});
+
+function finishScrubbing() {
+  if (!scrubbing) return;
+  scrubbing = false;
+  scheduleRender();
+}
+
+window.addEventListener('pointerup', finishScrubbing);
+window.addEventListener('pointercancel', finishScrubbing);
+window.addEventListener('blur', finishScrubbing);
+
+function scrollFromSlider() {
+  const progress = positionSlider.valueAsNumber / Number(positionSlider.max);
+  if (progress === 0 || progress === 1) {
+    window.scrollTo(0, progress * document.documentElement.scrollHeight);
+  } else {
+    scrollToOffset(progress * layout.maxLogicalOffset);
+  }
+  scheduleRender();
+}
+
+positionSlider.addEventListener('input', scrollFromSlider);
+positionSlider.addEventListener('keydown', (event) => {
+  if (event.key !== 'Home' && event.key !== 'End') return;
+  event.preventDefault();
+  positionSlider.value = event.key === 'Home' ? positionSlider.min : positionSlider.max;
+  scrollFromSlider();
+});
+
 window.addEventListener('scroll', scheduleRender, { passive: true });
 window.addEventListener('resize', measureLayout);
 const observer = new ResizeObserver(measureLayout);
 observer.observe(toolbar);
 observer.observe(list);
 observer.observe(measure);
+positionSlider.hidden = false;
 measureLayout();

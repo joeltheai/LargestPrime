@@ -1,6 +1,6 @@
 # Largest Prime
 
-Scroll through the 41,024,320 decimal digits of the largest known prime, 2¹³⁶²⁷⁹⁸⁴¹ − 1. Use **Jump to digit** to highlight a position, counted from 1.
+Scroll through the 41,024,320 decimal digits of the largest known prime, 2¹³⁶²⁷⁹⁸⁴¹ − 1. Click or drag the scrollbar to move through the number, or use **Jump to digit** to highlight an exact position, counted from 1.
 
 ## Run locally
 
