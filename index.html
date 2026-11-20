@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Scroll through all 41,024,320 digits of the largest known prime number.">
+  <title>The Largest Known Prime</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="viewer.mjs"></script>
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <h1>The largest known prime</h1>
+      <p class="formula">2<sup>136,279,841</sup> − 1</p>
+      <p class="credit">41,024,320 digits. Discovered by Luke Durant on October 12, 2024.</p>
+      <a href="https://www.mersenne.org/primes/?press=M136279841">GIMPS discovery announcement</a>
+    </header>
+
+    <section class="explorer" aria-label="Decimal digit explorer">
+      <div class="toolbar">
+        <div class="controls">
+          <p id="position" class="position">Digits 1–41,024,320</p>
+          <form id="jump-form">
+            <label for="digit">Jump to digit</label>
+            <input id="digit" name="digit" type="text" inputmode="numeric" autocomplete="off"
+                   maxlength="16" placeholder="1–41,024,320" aria-describedby="jump-error" required>
+            <button type="submit">Go</button>
+          </form>
+        </div>
+        <p id="jump-error" role="alert" hidden></p>
+        <div class="loading">
+          <span id="load-status" role="status">Loading digits…</span>
+          <button type="button" id="retry" hidden>Retry</button>
+        </div>
+      </div>
+      <noscript><p>Enable JavaScript to scroll through the digits, or <a href="m136279841.txt">download the digit file</a>.</p></noscript>
+      <div id="digit-list" aria-label="Digits in decimal order">
+        <span id="digit-measure" aria-hidden="true">0</span>
+        <div id="rows"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
