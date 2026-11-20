@@ -1,5 +1,6 @@
 :root {
   color-scheme: light;
+  overscroll-behavior: none;
   --background: #fff;
   --border: #a4a9b0;
   --text: #191d23;
