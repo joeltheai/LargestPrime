@@ -17,7 +17,7 @@ const template = await readFile(new URL('./index.html', import.meta.url), 'utf8'
 const seed = '<script id="initial-digits" type="text/plain">';
 await writeFile(new URL('index.html', output), template.replace(seed, seed + digits.slice(0, digitsPerBlock)));
 
-for (const asset of ['styles.css', 'viewer.mjs', 'digits.mjs']) {
+for (const asset of ['favicon.svg', 'styles.css', 'viewer.mjs', 'digits.mjs']) {
   await copyFile(new URL(asset, import.meta.url), new URL(asset, output));
 }
 

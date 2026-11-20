@@ -6,6 +6,7 @@ import './build.mjs';
 const files = new Map([
   ['/', ['index.html', 'text/html']],
   ['/index.html', ['index.html', 'text/html']],
+  ['/favicon.svg', ['favicon.svg', 'image/svg+xml']],
   ['/styles.css', ['styles.css', 'text/css']],
   ['/viewer.mjs', ['viewer.mjs', 'text/javascript']],
   ['/digits.mjs', ['digits.mjs', 'text/javascript']],
