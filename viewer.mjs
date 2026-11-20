@@ -39,8 +39,7 @@ function scrollToDigit(digit) {
 
 function measureLayout() {
   const char = measure.getBoundingClientRect();
-  const labelWidth = parseFloat(getComputedStyle(list).getPropertyValue('--label-width')) * char.width;
-  const availableDigits = (rows.clientWidth - labelWidth) / char.width;
+  const availableDigits = rows.clientWidth / char.width;
   // Choose a divisor of the block size so each display row fits in one block.
   const digitsPerRow = [100, 80, 50, 40, 25, 20, 16, 10, 5, 1].find((width) => width <= availableDigits) ?? 1;
   const rowHeight = char.height;
@@ -116,11 +115,6 @@ function paintRows(first, end) {
     if (!node) {
       node = document.createElement('div');
       node.className = 'digit-row';
-      node.dataset.parity = index % 2 ? 'odd' : 'even';
-      const label = document.createElement('span');
-      label.className = 'row-start';
-      label.textContent = format.format(start + 1);
-      node.append(label, document.createElement('span'));
       rows.insertBefore(node, next);
       rowNodes.set(index, node);
     }
@@ -132,13 +126,12 @@ function paintRows(first, end) {
       ? selectedDigit - start : -1;
     if (node.digits === digits && node.highlight === highlight) continue;
 
-    const content = node.lastChild;
     if (!digits || highlight === -1) {
-      content.textContent = digits ?? '';
+      node.textContent = digits ?? '';
     } else {
       const mark = document.createElement('mark');
       mark.textContent = digits[highlight];
-      content.replaceChildren(digits.slice(0, highlight), mark, digits.slice(highlight + 1));
+      node.replaceChildren(digits.slice(0, highlight), mark, digits.slice(highlight + 1));
     }
     node.digits = digits;
     node.highlight = highlight;
