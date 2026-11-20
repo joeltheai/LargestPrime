@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Scroll through all 41,024,320 digits of the largest known prime number.">
-  <title>The Largest (Known) Prime</title>
+  <title>The Largest (Known) Prime Number — 41,024,320 Digits</title>
+  <meta name="description" content="Explore all 41,024,320 digits of the largest known prime number, 2^136279841 − 1. Scroll through the digits or jump directly to any position.">
+  <link rel="canonical" href="https://largestprime.pages.dev/">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
   <link rel="modulepreload" href="digits.mjs">
@@ -44,7 +45,7 @@
       <noscript><p>Enable JavaScript to scroll through the digits, or <a href="https://www.mersenne.org/primes/digits/M136279841.zip">download the digit file from GIMPS</a>.</p></noscript>
       <div id="digit-list" aria-label="Digits in decimal order">
         <span id="digit-measure" aria-hidden="true">0</span>
-        <div id="rows"></div>
+        <div id="rows" data-nosnippet></div>
       </div>
     </section>
   </main>
