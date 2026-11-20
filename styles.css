@@ -70,7 +70,7 @@ a { color: var(--accent); text-underline-offset: .2em; }
   font-variant-numeric: tabular-nums;
 }
 
-label, .loading, #jump-error { font-size: .875rem; }
+label, .load-feedback, #jump-error { font-size: .875rem; }
 
 input, button {
   min-block-size: 2.25rem;
@@ -95,13 +95,13 @@ button {
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-.loading {
+.load-feedback {
   min-block-size: 1.65rem;
   margin-block-start: .25rem;
   color: var(--muted);
 }
 
-.loading button { min-block-size: auto; padding-block: 0; }
+.load-feedback button { min-block-size: auto; padding-block: 0; }
 
 #jump-error { color: #a5261b; margin: .25rem 0 0; }
 
@@ -116,10 +116,14 @@ button {
 
 #rows {
   position: absolute;
+  inset-block-start: 0;
   inset-inline: 0;
 }
 
-.digit-row { white-space: pre; }
+.digit-row {
+  min-block-size: 1lh;
+  white-space: pre;
+}
 
 mark {
   color: #203317;

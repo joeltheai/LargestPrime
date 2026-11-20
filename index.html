@@ -6,6 +6,7 @@
   <meta name="description" content="Scroll through all 41,024,320 digits of the largest known prime number.">
   <title>The Largest Known Prime</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="modulepreload" href="digits.mjs">
   <script type="module" src="viewer.mjs"></script>
 </head>
 <body>
@@ -28,8 +29,8 @@
           </form>
         </div>
         <p id="jump-error" role="alert" hidden></p>
-        <div class="loading">
-          <span id="load-status" role="status">Loading digits…</span>
+        <div class="load-feedback">
+          <span id="load-status" role="status"></span>
           <button type="button" id="retry" hidden>Retry</button>
         </div>
       </div>
@@ -40,5 +41,6 @@
       </div>
     </section>
   </main>
+  <script id="initial-digits" type="text/plain"></script>
 </body>
 </html>

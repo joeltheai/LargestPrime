@@ -13,8 +13,12 @@ const retry = document.querySelector('#retry');
 
 const format = new Intl.NumberFormat('en-US');
 const overscan = 12;
+const prefetchBlocks = 2;
+const finalBlock = Math.floor((digitCount - 1) / digitsPerBlock);
 const maxScrollHeight = 8_000_000;
 const cache = new Map();
+const initialDigits = document.querySelector('#initial-digits').textContent;
+if (initialDigits) cache.set(0, initialDigits);
 const pending = new Map();
 const failed = new Set();
 const rowNodes = new Map();
@@ -63,40 +67,52 @@ function measureLayout() {
   scheduleRender();
 }
 
+function requestBlock(block) {
+  if (cache.has(block)) {
+    const digits = cache.get(block);
+    cache.delete(block);
+    cache.set(block, digits);
+    return;
+  }
+  if (pending.has(block) || failed.has(block)) return;
+
+  const controller = new AbortController();
+  pending.set(block, controller);
+  fetchDigitBlock(block, controller.signal).then((digits) => {
+    if (controller.signal.aborted) return;
+    cache.set(block, digits);
+    if (cache.size > 12) cache.delete(cache.keys().next().value);
+  }).catch(() => {
+    if (!controller.signal.aborted) failed.add(block);
+  }).finally(() => {
+    if (pending.get(block) === controller) {
+      pending.delete(block);
+      scheduleRender();
+    }
+  });
+}
+
 function requestBlocks(first, last) {
+  const prefetchStart = Math.max(0, first - prefetchBlocks);
+  const prefetchEnd = Math.min(finalBlock, last + prefetchBlocks);
   for (const [block, controller] of pending) {
-    if (block < first || block > last) {
+    if (block < prefetchStart || block > prefetchEnd) {
       pending.delete(block);
       controller.abort();
     }
   }
   for (const block of failed) {
-    if (block < first || block > last) failed.delete(block);
+    if (block < prefetchStart || block > prefetchEnd) failed.delete(block);
   }
 
   for (let block = first; block <= last; block++) {
-    if (cache.has(block)) {
-      const digits = cache.get(block);
-      cache.delete(block);
-      cache.set(block, digits);
-      continue;
-    }
-    if (pending.has(block) || failed.has(block)) continue;
-
-    const controller = new AbortController();
-    pending.set(block, controller);
-    fetchDigitBlock(block, controller.signal).then((digits) => {
-      if (controller.signal.aborted) return;
-      cache.set(block, digits);
-      if (cache.size > 12) cache.delete(cache.keys().next().value);
-    }).catch(() => {
-      if (!controller.signal.aborted) failed.add(block);
-    }).finally(() => {
-      if (pending.get(block) === controller) {
-        pending.delete(block);
-        scheduleRender();
-      }
-    });
+    requestBlock(block);
+  }
+  for (let block = last + 1; block <= prefetchEnd; block++) {
+    requestBlock(block);
+  }
+  for (let block = first - 1; block >= prefetchStart; block--) {
+    requestBlock(block);
   }
 }
 
@@ -158,16 +174,19 @@ function render() {
   const lastBlock = Math.floor((Math.min(digitCount, end * digitsPerRow) - 1) / digitsPerBlock);
   requestBlocks(firstBlock, lastBlock);
   paintRows(first, end);
-  rows.style.top = `${first * rowHeight + Math.max(0, physicalOffset) - logicalOffset}px`;
+  rows.style.transform = `translateY(${first * rowHeight + Math.max(0, physicalOffset) - logicalOffset}px)`;
 
   const range = `Digits ${format.format(currentDigit + 1)} – ${format.format(Math.min(digitCount, endVisible * digitsPerRow))}`;
   if (range !== previousPosition) {
     position.textContent = range;
     previousPosition = range;
   }
-  const status = failed.size ? 'Could not load digits.' : pending.size ? 'Loading digits…' : '';
+  const firstVisibleBlock = Math.floor(currentDigit / digitsPerBlock);
+  const lastVisibleBlock = Math.floor((Math.min(digitCount, endVisible * digitsPerRow) - 1) / digitsPerBlock);
+  const visibleFailure = [...failed].some((block) => block >= firstVisibleBlock && block <= lastVisibleBlock);
+  const status = visibleFailure ? 'Could not load digits.' : '';
   if (loadStatus.textContent !== status) loadStatus.textContent = status;
-  retry.hidden = !failed.size;
+  retry.hidden = !visibleFailure;
 }
 
 form.addEventListener('submit', (event) => {
