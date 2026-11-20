@@ -1,10 +1,10 @@
 :root {
-  color-scheme: dark;
-  --background: #11151a;
-  --border: #353f49;
-  --text: #f2f4f6;
-  --muted: #b1bdc9;
-  --accent: #c7eda3;
+  color-scheme: light;
+  --background: #fff;
+  --border: #a4a9b0;
+  --text: #191d23;
+  --muted: #535c69;
+  --accent: #305d20;
   --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
 
@@ -74,15 +74,24 @@ label, .loading, #jump-error { font-size: .875rem; }
 
 input, button {
   min-block-size: 2.25rem;
-  border: 1px solid var(--border);
   border-radius: .3rem;
   padding: .25rem .55rem;
   font: inherit;
 }
 
-input { width: 8.75rem; background: var(--background); }
+input {
+  width: 8.75rem;
+  border: 0;
+  background: #f0f2f4;
+  color: var(--text);
+}
 
-button { background: var(--background); color: var(--text); cursor: pointer; }
+button {
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  cursor: pointer;
+}
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
@@ -94,7 +103,7 @@ button { background: var(--background); color: var(--text); cursor: pointer; }
 
 .loading button { min-block-size: auto; padding-block: 0; }
 
-#jump-error { color: #ffb5a0; margin: .25rem 0 0; }
+#jump-error { color: #a5261b; margin: .25rem 0 0; }
 
 #digit-list {
   position: relative;
@@ -113,8 +122,8 @@ button { background: var(--background); color: var(--text); cursor: pointer; }
 .digit-row { white-space: pre; }
 
 mark {
-  color: #151c10;
-  background: var(--accent);
+  color: #203317;
+  background: #d8efc9;
   border-radius: .15em;
 }
 
