@@ -14,7 +14,6 @@ const retry = document.querySelector('#retry');
 
 const format = new Intl.NumberFormat('en-US');
 const overscan = 12;
-const prefetchBlocks = 2;
 const finalBlock = Math.floor((digitCount - 1) / digitsPerBlock);
 const maxScrollHeight = 8_000_000;
 const cache = new Map();
@@ -31,6 +30,10 @@ let selectedDigit = -1;
 let insideList = false;
 let previousPosition = '';
 let scrubbing = false;
+let scrollDirection = 1;
+let rowsDirty = true;
+let mountedStart;
+let mountedEnd;
 
 function scheduleRender() {
   if (frame === undefined) frame = requestAnimationFrame(render);
@@ -67,6 +70,7 @@ function measureLayout() {
   if (dimensionsChanged) {
     rowNodes.clear();
     rows.replaceChildren();
+    rowsDirty = true;
     if (insideList) scrollToDigit(currentDigit);
   }
   scheduleRender();
@@ -87,6 +91,7 @@ function requestBlock(block) {
     if (controller.signal.aborted) return;
     cache.set(block, digits);
     if (cache.size > 12) cache.delete(cache.keys().next().value);
+    rowsDirty = true;
   }).catch(() => {
     if (!controller.signal.aborted) failed.add(block);
   }).finally(() => {
@@ -98,8 +103,9 @@ function requestBlock(block) {
 }
 
 function requestBlocks(first, last) {
-  const prefetchStart = Math.max(0, first - prefetchBlocks);
-  const prefetchEnd = Math.min(finalBlock, last + prefetchBlocks);
+  const ahead = currentDigit === 0 ? 2 : 3;
+  const prefetchStart = Math.max(0, first - (scrollDirection < 0 ? ahead : 1));
+  const prefetchEnd = Math.min(finalBlock, last + (scrollDirection > 0 ? ahead : 1));
   for (const [block, controller] of pending) {
     if (block < prefetchStart || block > prefetchEnd) {
       pending.delete(block);
@@ -110,15 +116,19 @@ function requestBlocks(first, last) {
     if (block < prefetchStart || block > prefetchEnd) failed.delete(block);
   }
 
+  let needsDigits = false;
   for (let block = first; block <= last; block++) {
+    if (!cache.has(block)) needsDigits = true;
     requestBlock(block);
   }
-  for (let block = last + 1; block <= prefetchEnd; block++) {
+  if (needsDigits) return;
+
+  const leadingBlock = scrollDirection > 0 ? last : first;
+  for (let block = leadingBlock + scrollDirection; block >= prefetchStart && block <= prefetchEnd; block += scrollDirection) {
     requestBlock(block);
   }
-  for (let block = first - 1; block >= prefetchStart; block--) {
-    requestBlock(block);
-  }
+  const trailingBlock = scrollDirection > 0 ? first - 1 : last + 1;
+  if (trailingBlock >= prefetchStart && trailingBlock <= prefetchEnd) requestBlock(trailingBlock);
 }
 
 function paintRows(first, end) {
@@ -173,12 +183,19 @@ function render() {
   const endVisible = Math.min(rowCount, Math.max(firstVisible + 1, Math.ceil((logicalOffset + visibleHeight) / rowHeight)));
   const first = Math.max(0, firstVisible - overscan);
   const end = Math.min(rowCount, endVisible + overscan);
-  currentDigit = firstVisible * digitsPerRow;
+  const nextDigit = firstVisible * digitsPerRow;
+  if (nextDigit !== currentDigit) scrollDirection = nextDigit > currentDigit ? 1 : -1;
+  currentDigit = nextDigit;
 
   const firstBlock = Math.floor(first * digitsPerRow / digitsPerBlock);
   const lastBlock = Math.floor((Math.min(digitCount, end * digitsPerRow) - 1) / digitsPerBlock);
   if (!scrubbing) requestBlocks(firstBlock, lastBlock);
-  paintRows(first, end);
+  if (rowsDirty || first !== mountedStart || end !== mountedEnd) {
+    paintRows(first, end);
+    mountedStart = first;
+    mountedEnd = end;
+    rowsDirty = false;
+  }
   rows.style.transform = `translateY(${first * rowHeight + Math.max(0, physicalOffset) - logicalOffset}px)`;
 
   const range = `Digits ${format.format(currentDigit + 1)} – ${format.format(Math.min(digitCount, endVisible * digitsPerRow))}`;
@@ -211,6 +228,7 @@ form.addEventListener('submit', (event) => {
   }
 
   selectedDigit = digit - 1;
+  rowsDirty = true;
   scrollToDigit(selectedDigit);
   scheduleRender();
 });
