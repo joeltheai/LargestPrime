@@ -6,6 +6,7 @@
   --text: #191d23;
   --muted: #535c69;
   --accent: #305d20;
+  --reader-bottom-padding: 1.25rem;
   --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
 
@@ -122,7 +123,7 @@ button {
   top: var(--scrollbar-top);
   left: calc(var(--scrollbar-left) + .25rem);
   width: 1.5rem;
-  height: calc(100dvh - var(--scrollbar-top) - .75rem);
+  height: calc(100dvh - var(--scrollbar-top) - var(--reader-bottom-padding));
   writing-mode: vertical-lr;
   margin: 0;
   padding: 0;
@@ -158,7 +159,7 @@ button {
   position: relative;
   overflow: clip;
   overflow-anchor: none;
-  padding-block-end: .75rem;
+  padding-block-end: var(--reader-bottom-padding);
   font: .875rem/1.5rem var(--mono);
 }
 
