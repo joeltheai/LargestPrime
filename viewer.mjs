@@ -14,6 +14,7 @@ const retry = document.querySelector('#retry');
 
 const format = new Intl.NumberFormat('en-US');
 const overscan = 12;
+const scrubIdleDelay = 100;
 const finalBlock = Math.floor((digitCount - 1) / digitsPerBlock);
 const maxScrollHeight = 8_000_000;
 const cache = new Map();
@@ -29,6 +30,8 @@ let currentDigit = 0;
 let selectedDigit = -1;
 let previousPosition = '';
 let scrubbing = false;
+let scrubTimer;
+let scrubFetchReady = false;
 let scrollDirection = 1;
 let rowsDirty = true;
 let mountedStart;
@@ -105,10 +108,11 @@ function requestBlock(block) {
   });
 }
 
-function requestBlocks(first, last) {
-  const ahead = currentDigit === 0 ? 2 : 3;
-  const prefetchStart = Math.max(0, first - (scrollDirection < 0 ? ahead : 1));
-  const prefetchEnd = Math.min(finalBlock, last + (scrollDirection > 0 ? ahead : 1));
+function requestBlocks(first, last, prefetch) {
+  const ahead = prefetch ? (currentDigit === 0 ? 2 : 3) : 0;
+  const behind = prefetch ? 1 : 0;
+  const prefetchStart = Math.max(0, first - (scrollDirection < 0 ? ahead : behind));
+  const prefetchEnd = Math.min(finalBlock, last + (scrollDirection > 0 ? ahead : behind));
   for (const [block, controller] of pending) {
     if (block < prefetchStart || block > prefetchEnd) {
       pending.delete(block);
@@ -124,7 +128,7 @@ function requestBlocks(first, last) {
     if (!cache.has(block)) needsDigits = true;
     requestBlock(block);
   }
-  if (needsDigits) return;
+  if (needsDigits || !prefetch) return;
 
   const leadingBlock = scrollDirection > 0 ? last : first;
   for (let block = leadingBlock + scrollDirection; block >= prefetchStart && block <= prefetchEnd; block += scrollDirection) {
@@ -191,7 +195,10 @@ function render() {
 
   const firstBlock = Math.floor(first * digitsPerRow / digitsPerBlock);
   const lastBlock = Math.floor((Math.min(digitCount, end * digitsPerRow) - 1) / digitsPerBlock);
-  if (!scrubbing) requestBlocks(firstBlock, lastBlock);
+  if (!scrubbing || scrubFetchReady) {
+    requestBlocks(firstBlock, lastBlock, !scrubbing);
+    scrubFetchReady = false;
+  }
   if (rowsDirty || first !== mountedStart || end !== mountedEnd) {
     paintRows(first, end);
     mountedStart = first;
@@ -252,6 +259,8 @@ positionSlider.addEventListener('pointerdown', (event) => {
 function finishScrubbing() {
   if (!scrubbing) return;
   scrubbing = false;
+  clearTimeout(scrubTimer);
+  scrubTimer = undefined;
   scheduleRender();
 }
 
@@ -260,6 +269,14 @@ window.addEventListener('pointercancel', finishScrubbing);
 window.addEventListener('blur', finishScrubbing);
 
 function scrollFromSlider() {
+  if (scrubbing) {
+    if (scrubTimer === undefined) scrubFetchReady = true;
+    clearTimeout(scrubTimer);
+    scrubTimer = setTimeout(() => {
+      scrubFetchReady = true;
+      scheduleRender();
+    }, scrubIdleDelay);
+  }
   const progress = positionSlider.valueAsNumber / Number(positionSlider.max);
   if (progress === 0 || progress === 1) {
     window.scrollTo(0, progress * document.documentElement.scrollHeight);
