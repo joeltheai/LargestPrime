@@ -160,7 +160,7 @@ function render() {
   paintRows(first, end);
   rows.style.top = `${first * rowHeight + Math.max(0, physicalOffset) - logicalOffset}px`;
 
-  const range = `Digits ${format.format(currentDigit + 1)}–${format.format(Math.min(digitCount, endVisible * digitsPerRow))}`;
+  const range = `Digits ${format.format(currentDigit + 1)} – ${format.format(Math.min(digitCount, endVisible * digitsPerRow))}`;
   if (range !== previousPosition) {
     position.textContent = range;
     previousPosition = range;
