@@ -51,6 +51,7 @@ h1 {
 
 .formula {
   margin: 0;
+  color: var(--accent);
   font: 1rem/1.25 var(--mono);
   white-space: nowrap;
 }
