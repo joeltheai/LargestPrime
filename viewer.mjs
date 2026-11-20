@@ -15,6 +15,7 @@ const retry = document.querySelector('#retry');
 const format = new Intl.NumberFormat('en-US');
 const overscan = 12;
 const scrubIdleDelay = 100;
+const hoverDelay = 100;
 const finalBlock = Math.floor((digitCount - 1) / digitsPerBlock);
 const maxScrollHeight = 8_000_000;
 const cache = new Map();
@@ -32,6 +33,8 @@ let previousPosition = '';
 let scrubbing = false;
 let scrubTimer;
 let scrubFetchReady = false;
+let hoverTimer;
+let hoverBlock;
 let scrollDirection = 1;
 let rowsDirty = true;
 let mountedStart;
@@ -63,13 +66,14 @@ function measureLayout() {
   const physicalHeight = Math.min(logicalHeight, maxScrollHeight);
   const viewportHeight = document.documentElement.clientHeight;
   const headerHeight = readerHeader.offsetHeight;
+  const thumbHeight = parseFloat(getComputedStyle(positionSlider).getPropertyValue('--thumb-height'));
   const readingHeight = Math.max(1, viewportHeight - headerHeight);
   const maxLogicalOffset = logicalHeight - readingHeight;
   const scrollScale = (physicalHeight - readingHeight) / maxLogicalOffset;
 
   const dimensionsChanged = layout &&
     (layout.digitsPerRow !== digitsPerRow || layout.rowHeight !== rowHeight);
-  layout = { digitsPerRow, rowHeight, rowCount, viewportHeight, maxLogicalOffset, scrollScale };
+  layout = { digitsPerRow, rowHeight, rowCount, viewportHeight, maxLogicalOffset, scrollScale, thumbHeight };
   positionSlider.style.setProperty('--scrollbar-top', `${headerHeight}px`);
   positionSlider.style.setProperty('--scrollbar-left', `${char.left + digitsPerRow * char.width}px`);
   list.style.height = `${physicalHeight}px`;
@@ -114,7 +118,7 @@ function requestBlocks(first, last, prefetch) {
   const prefetchStart = Math.max(0, first - (scrollDirection < 0 ? ahead : behind));
   const prefetchEnd = Math.min(finalBlock, last + (scrollDirection > 0 ? ahead : behind));
   for (const [block, controller] of pending) {
-    if (block < prefetchStart || block > prefetchEnd) {
+    if (block !== hoverBlock && (block < prefetchStart || block > prefetchEnd)) {
       pending.delete(block);
       controller.abort();
     }
@@ -238,6 +242,7 @@ form.addEventListener('submit', (event) => {
 
   selectedDigit = digit - 1;
   rowsDirty = true;
+  requestBlock(Math.floor(selectedDigit / digitsPerBlock));
   scrollToDigit(selectedDigit);
   scheduleRender();
 });
@@ -252,8 +257,46 @@ retry.addEventListener('click', () => {
   scheduleRender();
 });
 
+function blockAtOffset(offset) {
+  const { rowHeight, digitsPerRow } = layout;
+  return Math.floor(Math.floor(offset / rowHeight) * digitsPerRow / digitsPerBlock);
+}
+
+function clearHover() {
+  clearTimeout(hoverTimer);
+  hoverBlock = undefined;
+}
+
+positionSlider.addEventListener('pointermove', (event) => {
+  if (scrubbing || event.pointerType !== 'mouse') return;
+  const { top, height } = positionSlider.getBoundingClientRect();
+  const { thumbHeight, maxLogicalOffset } = layout;
+  if (height <= thumbHeight) return;
+
+  const max = Number(positionSlider.max);
+  const travel = height - thumbHeight;
+  const pointer = event.clientY - top - thumbHeight / 2;
+  const thumb = positionSlider.valueAsNumber / max * travel;
+  if (Math.abs(pointer - thumb) <= thumbHeight / 2) {
+    clearHover();
+    return;
+  }
+
+  const step = Math.min(max, Math.max(0, Math.round(pointer / travel * max)));
+  const block = blockAtOffset(step / max * maxLogicalOffset);
+  if (block === hoverBlock) return;
+  clearHover();
+  if (cache.has(block) || pending.has(block) || failed.has(block)) return;
+  hoverBlock = block;
+  hoverTimer = setTimeout(() => requestBlock(block), hoverDelay);
+});
+
+positionSlider.addEventListener('pointerleave', clearHover);
 positionSlider.addEventListener('pointerdown', (event) => {
-  if (event.isPrimary && event.button === 0) scrubbing = true;
+  if (event.isPrimary && event.button === 0) {
+    clearHover();
+    scrubbing = true;
+  }
 });
 
 function finishScrubbing() {
@@ -269,6 +312,10 @@ window.addEventListener('pointercancel', finishScrubbing);
 window.addEventListener('blur', finishScrubbing);
 
 function scrollFromSlider() {
+  const progress = positionSlider.valueAsNumber / Number(positionSlider.max);
+  const offset = progress * layout.maxLogicalOffset;
+  if (!scrubbing || scrubTimer === undefined) requestBlock(blockAtOffset(offset));
+
   if (scrubbing) {
     if (scrubTimer === undefined) scrubFetchReady = true;
     clearTimeout(scrubTimer);
@@ -277,11 +324,10 @@ function scrollFromSlider() {
       scheduleRender();
     }, scrubIdleDelay);
   }
-  const progress = positionSlider.valueAsNumber / Number(positionSlider.max);
   if (progress === 0 || progress === 1) {
     window.scrollTo(0, progress * document.documentElement.scrollHeight);
   } else {
-    scrollToOffset(progress * layout.maxLogicalOffset);
+    scrollToOffset(offset);
   }
   scheduleRender();
 }
