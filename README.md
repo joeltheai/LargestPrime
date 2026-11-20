@@ -28,6 +28,6 @@ Select **Save and Deploy**. Cloudflare builds `dist/` from the tracked source an
 
 ## How it works
 
-The page uses native document scrolling. The viewer keeps the visible rows and 12 extra rows on either side in the DOM. Display rows adapt to the available width, and the scroll height is capped for browsers with limited layout dimensions.
+The page uses native document scrolling with the title and controls pinned above the digits. The viewer keeps the visible rows and 12 extra rows on either side in the DOM. Display rows adapt to the available width, and the scroll height is capped for browsers with limited layout dimensions.
 
 The build script validates the digits in `m136279841.txt` and writes them to static files of up to 20,000 digits each. The first block also ships in the HTML so the viewer can display digits without a separate request. The viewer prefetches in the direction you scroll and keeps up to 12 completed blocks in memory. When you drag the scrollbar, it waits until you release it before requesting digits at the new position.

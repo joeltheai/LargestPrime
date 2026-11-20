@@ -3,7 +3,7 @@ import { digitCount, digitsPerBlock, fetchDigitBlock } from './digits.mjs';
 const list = document.querySelector('#digit-list');
 const rows = document.querySelector('#rows');
 const measure = document.querySelector('#digit-measure');
-const toolbar = document.querySelector('.toolbar');
+const readerHeader = document.querySelector('.reader-header');
 const position = document.querySelector('#position');
 const positionSlider = document.querySelector('#position-slider');
 const loadStatus = document.querySelector('#load-status');
@@ -27,7 +27,6 @@ let layout;
 let frame;
 let currentDigit = 0;
 let selectedDigit = -1;
-let insideList = false;
 let previousPosition = '';
 let scrubbing = false;
 let scrollDirection = 1;
@@ -41,7 +40,7 @@ function scheduleRender() {
 
 function scrollToOffset(offset) {
   const listTop = list.getBoundingClientRect().top + window.scrollY;
-  window.scrollTo(0, Math.floor(listTop - toolbar.offsetHeight + offset * layout.scrollScale));
+  window.scrollTo(0, Math.floor(listTop - readerHeader.offsetHeight + offset * layout.scrollScale));
 }
 
 function scrollToDigit(digit) {
@@ -59,7 +58,7 @@ function measureLayout() {
   const logicalHeight = rowCount * rowHeight;
   const physicalHeight = Math.min(logicalHeight, maxScrollHeight);
   const viewportHeight = document.documentElement.clientHeight;
-  const readingHeight = Math.max(1, viewportHeight - toolbar.offsetHeight);
+  const readingHeight = Math.max(1, viewportHeight - readerHeader.offsetHeight);
   const maxLogicalOffset = logicalHeight - readingHeight;
   const scrollScale = (physicalHeight - readingHeight) / maxLogicalOffset;
 
@@ -71,7 +70,7 @@ function measureLayout() {
     rowNodes.clear();
     rows.replaceChildren();
     rowsDirty = true;
-    if (insideList) scrollToDigit(currentDigit);
+    scrollToDigit(currentDigit);
   }
   scheduleRender();
 }
@@ -173,8 +172,7 @@ function render() {
   frame = undefined;
   const { digitsPerRow, rowHeight, rowCount, viewportHeight, maxLogicalOffset, scrollScale } = layout;
   const listTop = list.getBoundingClientRect().top;
-  const physicalOffset = toolbar.getBoundingClientRect().bottom - listTop;
-  insideList = listTop <= toolbar.offsetHeight;
+  const physicalOffset = readerHeader.getBoundingClientRect().bottom - listTop;
   // Compress the scrollbar on narrow screens to stay within browser layout limits.
   // Keep the mounted rows at full size so the digits remain legible.
   const logicalOffset = Math.min(maxLogicalOffset, Math.max(0, physicalOffset) / scrollScale);
@@ -278,7 +276,7 @@ positionSlider.addEventListener('keydown', (event) => {
 window.addEventListener('scroll', scheduleRender, { passive: true });
 window.addEventListener('resize', measureLayout);
 const observer = new ResizeObserver(measureLayout);
-observer.observe(toolbar);
+observer.observe(readerHeader);
 observer.observe(list);
 observer.observe(measure);
 positionSlider.hidden = false;

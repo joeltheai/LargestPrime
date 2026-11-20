@@ -11,14 +11,13 @@
 </head>
 <body>
   <main>
-    <header class="intro">
-      <h1>The largest known prime</h1>
-      <p class="formula">2<sup>136,279,841</sup> − 1</p>
-      <p class="credit">41,024,320 digits. Discovered by Luke Durant on October 12, 2024.</p>
-      <a href="https://www.mersenne.org/primes/?press=M136279841" target="_blank" rel="noopener">GIMPS discovery announcement</a>
-    </header>
-
-    <section class="explorer" aria-label="Decimal digit explorer">
+    <div class="reader-header">
+      <header class="intro">
+        <h1>The largest known prime</h1>
+        <p class="formula">2<sup>136,279,841</sup> − 1</p>
+        <p class="credit">41,024,320 digits. Discovered by Luke Durant on October 12, 2024.</p>
+        <a href="https://www.mersenne.org/primes/?press=M136279841" target="_blank" rel="noopener">GIMPS discovery announcement</a>
+      </header>
       <div class="toolbar">
         <div class="controls">
           <p id="position" class="position">Digits 1 – 41,024,320</p>
@@ -34,6 +33,8 @@
           <button type="button" id="retry" hidden>Retry</button>
         </div>
       </div>
+    </div>
+    <section class="explorer" aria-label="Decimal digit explorer">
       <noscript><p>Enable JavaScript to scroll through the digits, or <a href="https://www.mersenne.org/primes/digits/M136279841.zip">download the digit file from GIMPS</a>.</p></noscript>
       <div id="digit-list" aria-label="Digits in decimal order">
         <span id="digit-measure" aria-hidden="true">0</span>
