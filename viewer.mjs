@@ -55,16 +55,20 @@ function measureLayout() {
   const digitsPerRow = [100, 80, 50, 40, 25, 20, 16, 10, 5, 1].find((width) => width <= availableDigits) ?? 1;
   const rowHeight = char.height;
   const rowCount = Math.ceil(digitCount / digitsPerRow);
-  const logicalHeight = rowCount * rowHeight;
+  const endPadding = parseFloat(getComputedStyle(list).paddingBottom);
+  const logicalHeight = rowCount * rowHeight + endPadding;
   const physicalHeight = Math.min(logicalHeight, maxScrollHeight);
   const viewportHeight = document.documentElement.clientHeight;
-  const readingHeight = Math.max(1, viewportHeight - readerHeader.offsetHeight);
+  const headerHeight = readerHeader.offsetHeight;
+  const readingHeight = Math.max(1, viewportHeight - headerHeight);
   const maxLogicalOffset = logicalHeight - readingHeight;
   const scrollScale = (physicalHeight - readingHeight) / maxLogicalOffset;
 
   const dimensionsChanged = layout &&
     (layout.digitsPerRow !== digitsPerRow || layout.rowHeight !== rowHeight);
   layout = { digitsPerRow, rowHeight, rowCount, viewportHeight, maxLogicalOffset, scrollScale };
+  positionSlider.style.setProperty('--scrollbar-top', `${headerHeight}px`);
+  positionSlider.style.setProperty('--scrollbar-left', `${char.left + digitsPerRow * char.width}px`);
   list.style.height = `${physicalHeight}px`;
   if (dimensionsChanged) {
     rowNodes.clear();

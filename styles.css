@@ -29,7 +29,8 @@ html:has(#position-slider:not([hidden])) { scrollbar-width: none; }
 html:has(#position-slider:not([hidden])) main { padding-inline-end: 2rem; }
 
 .intro {
-  padding-block: 1.25rem .5rem;
+  padding-block: .75rem .125rem;
+  line-height: 1.25;
 }
 
 h1 {
@@ -39,12 +40,13 @@ h1 {
 }
 
 .formula {
-  margin: .125rem 0;
-  font: 1rem/1.5 var(--mono);
+  margin: 0;
+  font: 1rem/1.25 var(--mono);
 }
 
 .formula sup {
   font-size: .75em;
+  line-height: 0;
 }
 
 .credit { margin: 0; color: var(--muted); }
@@ -55,10 +57,11 @@ a { color: var(--accent); text-underline-offset: .2em; }
   position: sticky;
   z-index: 1;
   inset-block-start: 0;
+  padding-block-end: .5rem;
   background: var(--background);
 }
 
-.toolbar { padding-block-start: .5rem; }
+.toolbar { padding-block-start: .25rem; }
 
 .controls, form {
   display: flex;
@@ -73,7 +76,10 @@ a { color: var(--accent); text-underline-offset: .2em; }
 }
 
 @media (max-width: 36rem) {
-  .controls { flex-direction: column; }
+  .controls {
+    flex-direction: column;
+    gap: .125rem;
+  }
 }
 
 .position {
@@ -110,26 +116,40 @@ button {
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 #position-slider {
+  appearance: none;
   position: fixed;
   z-index: 2;
-  inset: 1rem .25rem 1rem auto;
+  top: var(--scrollbar-top);
+  left: calc(var(--scrollbar-left) + .25rem);
   width: 1.5rem;
-  height: calc(100dvh - 2rem);
+  height: calc(100dvh - var(--scrollbar-top) - .75rem);
   writing-mode: vertical-lr;
   margin: 0;
   padding: 0;
-  accent-color: var(--accent);
-  background: transparent;
+  background: linear-gradient(#dfe3e7, #dfe3e7) center / .25rem 100% no-repeat;
   cursor: pointer;
   touch-action: none;
 }
 
-.load-feedback {
-  min-block-size: 1.65rem;
-  margin-block-start: .25rem;
-  color: var(--muted);
+#position-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: .625rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--muted);
 }
 
+#position-slider::-moz-range-thumb {
+  width: .625rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--muted);
+}
+
+.load-feedback { color: var(--muted); }
+.load-feedback:has(#retry:not([hidden])) { margin-block-start: .25rem; }
 .load-feedback button { min-block-size: auto; padding-block: 0; }
 
 #jump-error { color: #a5261b; margin: .25rem 0 0; }
@@ -138,6 +158,7 @@ button {
   position: relative;
   overflow: clip;
   overflow-anchor: none;
+  padding-block-end: .75rem;
   font: .875rem/1.5rem var(--mono);
 }
 
