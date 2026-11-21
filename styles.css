@@ -7,6 +7,7 @@
   --muted: #535c69;
   --accent: #305d20;
   --reader-bottom-padding: 1.25rem;
+  --slider-width: 1.5rem;
   --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
 
@@ -17,6 +18,7 @@ body {
   background: var(--background);
   color: var(--text);
   font: 1rem/1.5 system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 
 main {
@@ -25,9 +27,11 @@ main {
   padding-inline: clamp(.75rem, 4vw, 2rem);
 }
 
-html:has(#position-slider:not([hidden])) { scrollbar-width: none; }
+html.reader-ready { scrollbar-width: none; }
 
-html:has(#position-slider:not([hidden])) main { padding-inline-end: 2rem; }
+html.reader-ready::-webkit-scrollbar { display: none; }
+
+html.reader-ready main { padding-inline-end: calc(var(--slider-width) + .5rem); }
 
 .intro {
   padding-block: .75rem .125rem;
@@ -67,8 +71,6 @@ h1 {
 
 a { color: var(--accent); text-underline-offset: .2em; }
 
-.intro-details a { white-space: nowrap; }
-
 .reader-header {
   position: sticky;
   z-index: 1;
@@ -94,6 +96,7 @@ a { color: var(--accent); text-underline-offset: .2em; }
 @media (max-width: 36rem) {
   .controls {
     flex-direction: column;
+    align-items: stretch;
     gap: .125rem;
   }
 }
@@ -113,11 +116,34 @@ input, button {
 
 #digit {
   width: 8.75rem;
+  min-inline-size: 0;
   border: 0;
   border-radius: 0;
   padding: .125rem .35rem;
   background: #f0f2f4;
   color: var(--text);
+}
+
+#digit:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+#jump-form button { display: none; }
+
+@media (pointer: coarse) {
+  :root { --slider-width: 44px; }
+
+  #jump-form { align-items: center; }
+  #jump-form button { display: inline-block; }
+
+  #digit, #jump-form button, #retry { min-block-size: 44px; }
+  #jump-form button, #retry { min-inline-size: 44px; }
+}
+
+@media (max-width: 23rem) {
+  .position { font-size: .75rem; }
+  #jump-form label { flex-basis: 100%; }
 }
 
 button {
@@ -133,12 +159,14 @@ button {
 
 #position-slider {
   --thumb-height: 24px;
+  -webkit-appearance: none;
   appearance: none;
   position: fixed;
   z-index: 2;
   top: var(--scrollbar-top);
   left: calc(var(--scrollbar-left) + .25rem);
-  width: 1.5rem;
+  width: var(--slider-width);
+  height: calc(100vh - var(--scrollbar-top) - var(--reader-bottom-padding));
   height: calc(100dvh - var(--scrollbar-top) - var(--reader-bottom-padding));
   writing-mode: vertical-lr;
   margin: 0;
@@ -149,6 +177,7 @@ button {
 }
 
 #position-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
   width: .625rem;
   height: var(--thumb-height);
@@ -173,6 +202,7 @@ button {
 
 #digit-list {
   position: relative;
+  overflow: hidden;
   overflow: clip;
   overflow-anchor: none;
   padding-block-end: var(--reader-bottom-padding);
@@ -188,7 +218,7 @@ button {
 }
 
 .digit-row {
-  min-block-size: 1lh;
+  min-block-size: 1.5rem;
   white-space: pre;
 }
 

@@ -11,6 +11,8 @@ const form = document.querySelector('#jump-form');
 const input = document.querySelector('#digit');
 const jumpError = document.querySelector('#jump-error');
 const retry = document.querySelector('#retry');
+const visualViewport = window.visualViewport;
+const touchControls = window.matchMedia('(pointer: coarse)');
 
 const format = new Intl.NumberFormat('en-US');
 const overscan = 12;
@@ -39,6 +41,7 @@ let scrollDirection = 1;
 let rowsDirty = true;
 let mountedStart;
 let mountedEnd;
+let keyboardJumpTimer;
 
 function scheduleRender() {
   if (frame === undefined) frame = requestAnimationFrame(render);
@@ -73,7 +76,8 @@ function measureLayout() {
 
   const dimensionsChanged = layout &&
     (layout.digitsPerRow !== digitsPerRow || layout.rowHeight !== rowHeight);
-  layout = { digitsPerRow, rowHeight, rowCount, viewportHeight, maxLogicalOffset, scrollScale, thumbHeight };
+  const headerHeightChanged = layout && layout.headerHeight !== headerHeight;
+  layout = { digitsPerRow, rowHeight, rowCount, viewportHeight, headerHeight, maxLogicalOffset, scrollScale, thumbHeight };
   positionSlider.style.setProperty('--scrollbar-top', `${headerHeight}px`);
   positionSlider.style.setProperty('--scrollbar-left', `${char.left + digitsPerRow * char.width}px`);
   list.style.height = `${physicalHeight}px`;
@@ -81,8 +85,8 @@ function measureLayout() {
     rowNodes.clear();
     rows.replaceChildren();
     rowsDirty = true;
-    scrollToDigit(currentDigit);
   }
+  if (dimensionsChanged || headerHeightChanged) scrollToDigit(currentDigit);
   scheduleRender();
 }
 
@@ -228,10 +232,31 @@ function render() {
   retry.hidden = !visibleFailure;
 }
 
+function finishKeyboardJump() {
+  clearTimeout(keyboardJumpTimer);
+  keyboardJumpTimer = undefined;
+}
+
+function keepJumpAfterKeyboardDismissal(delay) {
+  clearTimeout(keyboardJumpTimer);
+  keyboardJumpTimer = setTimeout(() => {
+    keyboardJumpTimer = undefined;
+    scrollToDigit(selectedDigit);
+    scheduleRender();
+  }, delay);
+}
+
+visualViewport?.addEventListener('resize', () => {
+  if (keyboardJumpTimer !== undefined) keepJumpAfterKeyboardDismissal(150);
+});
+window.addEventListener('pointerdown', finishKeyboardJump, { passive: true });
+window.addEventListener('wheel', finishKeyboardJump, { passive: true });
+window.addEventListener('keydown', finishKeyboardJump);
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const value = input.value.trim();
-  const digit = Number(value.replaceAll(',', ''));
+  const digit = Number(value.replace(/,/g, ''));
   const valid = /^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)$/.test(value) && digit >= 1 && digit <= digitCount;
   jumpError.hidden = valid;
   input.setAttribute('aria-invalid', String(!valid));
@@ -242,9 +267,15 @@ form.addEventListener('submit', (event) => {
 
   selectedDigit = digit - 1;
   rowsDirty = true;
+  if (touchControls.matches) {
+    // The browser can restore its earlier scroll position as the keyboard closes.
+    const keyboardOpen = visualViewport && visualViewport.height < document.documentElement.clientHeight - 100;
+    if (document.activeElement === input || keyboardOpen) keepJumpAfterKeyboardDismissal(500);
+    input.blur();
+  }
   requestBlock(Math.floor(selectedDigit / digitsPerBlock));
+  measureLayout();
   scrollToDigit(selectedDigit);
-  scheduleRender();
 });
 
 input.addEventListener('input', () => {
@@ -347,4 +378,5 @@ observer.observe(readerHeader);
 observer.observe(list);
 observer.observe(measure);
 positionSlider.hidden = false;
+document.documentElement.classList.add('reader-ready');
 measureLayout();
